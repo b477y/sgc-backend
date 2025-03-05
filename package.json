@@ -1,0 +1,13 @@
+{
+  "name": "sgc-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon ."
+  },
+  "keywords": [],
+  "author": "Mohammed Saleh (Batty)",
+  "license": "Proprietary",
+  "description": "Backend for SGC, a real estate marketplace platform that manages property listings, user authentication, and transactional operations. It offers a RESTful API to support frontend applications, enabling users to seamlessly buy, sell, and rent properties."
+}
