@@ -11,7 +11,7 @@ const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
   }))
 );
 
-const propertySchema = new Schema(
+const PropertySchema = new Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -46,9 +46,9 @@ const propertySchema = new Schema(
   { timestamps: true }
 );
 
-propertySchema.index({ title: 1, address: 1 }, { unique: true });
+PropertySchema.index({ title: 1, address: 1 }, { unique: true });
 
-propertySchema.pre("validate", function (next) {
+PropertySchema.pre("validate", function (next) {
   // Normalize category to match enum keys (case-insensitive)
   if (this.category) {
     const matchedCategory = Object.keys(Categories).find(
@@ -83,5 +83,5 @@ propertySchema.pre("validate", function (next) {
 });
 
 const PropertyModel =
-  mongoose.models.Property || mongoose.model("Property", propertySchema);
+  mongoose.models.Property || mongoose.model("Property", PropertySchema);
 export default PropertyModel;
