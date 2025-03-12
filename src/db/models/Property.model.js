@@ -1,10 +1,22 @@
 import mongoose, { Schema } from "mongoose";
-import { Amenities, Categories } from "../../utils/enum/enums.js";
+import {
+  Amenities,
+  Categories,
+  Cities,
+  Countries,
+  Currency,
+  FurnishedStatus,
+  Orientation,
+  PropertyPurpose,
+  RealEstateSituation,
+} from "../../utils/enum/enums.js";
 
-// Extract main categories and their subcategories
-const mainCategories = Object.keys(Categories); // ["Residential", "Plot", "Commercial"]
+// Extract main categories
+const mainCategories = Object.keys(Categories); // ["RESIDENTIAL", "PLOT", "COMMERCIAL"]
+
+// Extract subcategories correctly
 const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
-  Object.entries(sub).map(([key, value]) => ({
+  Object.entries(sub.options).map(([key, value]) => ({
     key,
     value,
     mainCategory: main,
@@ -13,9 +25,13 @@ const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
 
 const PropertySchema = new Schema(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    area: { type: Number, required: true }, // Property area in square meters
+    purpose: {
+      type: String,
+      enum: Object.keys(PropertyPurpose),
+      required: true,
+    },
+    country: { type: String, enum: Object.keys(Countries), required: true },
+    city: { type: String, enum: Object.keys(Cities), required: true },
     category: {
       type: String,
       required: true,
@@ -24,64 +40,132 @@ const PropertySchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: subcategories.map((s) => s.key), // Only allows valid subcategories
+      validate: {
+        validator: function (value) {
+          return subcategories.some(
+            (s) => s.key === value && s.mainCategory === this.category
+          );
+        },
+        message: (props) =>
+          `${props.value} is not a valid subcategory for ${props.instance.category}`,
+      },
     },
-    balconies: { type: Number, required: true },
-    bathrooms: { type: Number, required: true },
-    bedrooms: { type: Number, required: true },
-    country: {
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    price_currency: {
       type: String,
       required: true,
+      enum: Object.keys(Currency),
     },
-    city: {
+    price: { type: Number, required: true },
+    bedrooms: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    bathrooms: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    livingrooms: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    kitchen: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    balconies: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    floor_number: {
+      type: Number,
+      required: function () {
+        return this.category !== "PLOT";
+      },
+    },
+    orientation: {
       type: String,
       required: true,
+      enum: Object.keys(Orientation),
     },
-    postedOn: { type: Date, default: Date.now() },
-    totalrooms: { type: Number, required: true },
-    floorNumber: { type: Number, required: true },
-    amenities: [{ type: String, enum: Object.keys(Amenities) }],
-    purpose: { type: String },
+    monthly_service_currency: {
+      type: String,
+      required: true,
+      enum: Object.keys(Currency),
+    },
+    monthly_service: { type: Number, required: true },
+    real_estate_situation: {
+      type: String,
+      required: true,
+      enum: Object.keys(RealEstateSituation),
+    },
+    furnished: {
+      type: String,
+      required: true,
+      enum: Object.keys(FurnishedStatus),
+    },
+    area: { type: Number, required: true }, // Property area in square meters
+    amenities: [{ type: String, enum: Object.keys(Amenities), required: true }],
+    images: [{ secure_url: String, public_id: String }],
+    postedOn: { type: Date, default: Date.now, required: true },
+    contact: { type: String, required: true },
   },
   { timestamps: true }
 );
 
-PropertySchema.index({ title: 1, address: 1 }, { unique: true });
+// Ensure uniqueness for title & address
+PropertySchema.index({ title: 1, country: 1 }, { unique: true });
 
+// Pre-validation normalization (case-insensitive matching)
 PropertySchema.pre("validate", function (next) {
-  // Normalize category to match enum keys (case-insensitive)
   if (this.category) {
-    const matchedCategory = Object.keys(Categories).find(
-      (c) => c.toLowerCase() === this.category.toLowerCase()
-    );
-    if (matchedCategory) {
-      this.category = matchedCategory; // Ensure it's stored in uppercase
-    }
+    this.category =
+      Object.keys(Categories).find(
+        (c) => c.toLowerCase() === this.category.toLowerCase()
+      ) || this.category;
   }
 
-  // Normalize type (subcategory) to match enum keys (case-insensitive)
   if (this.type && this.category && Categories[this.category]) {
-    const matchedType = Object.keys(Categories[this.category]).find(
-      (t) => t.toLowerCase() === this.type.toLowerCase()
-    );
-    if (matchedType) {
-      this.type = matchedType; // Ensure it's stored in uppercase
-    }
+    this.type =
+      Object.keys(Categories[this.category].options).find(
+        (t) => t.toLowerCase() === this.type.toLowerCase()
+      ) || this.type;
   }
 
-  // Normalize amenities to match enum keys (case-insensitive)
   if (this.amenities && Array.isArray(this.amenities)) {
-    this.amenities = this.amenities.map((a) => {
-      const matchedAmenity = Object.keys(Amenities).find(
-        (key) => Amenities[key].toLowerCase() === a.toLowerCase()
-      );
-      return matchedAmenity || a; // Keep original if no match (to trigger validation error)
-    });
+    this.amenities = this.amenities
+      .flat() // Flatten nested arrays
+      .map((a) => (typeof a === "string" ? a.split(",") : [])) // Split comma-separated values
+      .flat(); // Flatten again after splitting
   }
 
   next();
 });
 
+PropertySchema.pre("save", function (next) {
+  if (this.category === "PLOT") {
+    this.set("bedrooms", undefined);
+    this.set("bathrooms", undefined);
+    this.set("livingrooms", undefined);
+    this.set("kitchen", undefined);
+    this.set("balconies", undefined);
+    this.set("floor_number", undefined);
+  }
+  next();
+});
+
 const PropertyModel =
   mongoose.models.Property || mongoose.model("Property", PropertySchema);
+
 export default PropertyModel;

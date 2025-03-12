@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { TokenType, UserRole } from "../enum/enums.js";
-import * as dbService from "../../db/db.service.js";
-import UserModel from "../../db/models/user.model.js";
+// import * as dbService from "../../db/db.service.js";
+// import UserModel from "../../db/models/user.model.js";
 
 export const generateTokens = async ({
   payload,

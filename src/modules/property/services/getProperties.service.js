@@ -13,7 +13,7 @@ const getProperties = asyncHandler(async (req, res, next) => {
     res,
     status: 200,
     message: "Properties retrieved successfully",
-    data: properties,
+    data: { properties },
   });
 });
 
