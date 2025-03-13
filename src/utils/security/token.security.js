@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import { TokenType, UserRole } from "../enum/enums.js";
-// import * as dbService from "../../db/db.service.js";
-// import UserModel from "../../db/models/user.model.js";
+import UserModel from "../../db/models/User.model.js";
 
 export const generateTokens = async ({
   payload,
@@ -70,9 +69,9 @@ export const decodeToken = async ({ authorization, tokenType } = {}) => {
     throw new Error("Invalid token payload", { cause: 401 });
   }
 
-  const user = await dbService.findOne({
-    model: UserModel,
-    filter: { _id: decoded.userId, deletedAt: { $exists: false } },
+  const user = await UserModel.findOne({
+    _id: decoded.userId,
+    deletedAt: { $exists: false },
   });
 
   if (!user) {

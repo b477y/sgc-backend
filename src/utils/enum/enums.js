@@ -199,7 +199,6 @@ export const FurnishedStatus = Object.freeze({
 export const PropertyPurpose = Object.freeze({
   SALE: "For Sale",
   RENT: "For RENT",
-  WANTED: "Wanted",
 });
 
 export const UserRole = Object.freeze({
@@ -210,11 +209,6 @@ export const UserRole = Object.freeze({
 export const TokenType = Object.freeze({
   ACCESS: "Access",
   REFRESH: "Refresh",
-});
-
-export const AuthProviders = Object.freeze({
-  GOOGLE: "Google",
-  SYSTEM: "System",
 });
 
 export const Genders = Object.freeze({

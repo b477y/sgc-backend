@@ -2,27 +2,8 @@ import PropertyModel from "../../../db/models/Property.model.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
 
-const getProperties = asyncHandler(async (req, res, next) => {
-  const { city, purpose, type, furnished, sort } = req.query;
-
-  // Dynamic filter: Filter by city and/or purpose if provided
-  const filter = {};
-  if (city) filter.city = city;
-  if (purpose) filter.purpose = purpose;
-  if (type) filter.type = type;
-  if (furnished) filter.furnished = furnished;
-
-  // Determine the sort order
-  let sortOrder = {};
-  if (sort === "newest") {
-    sortOrder.createdAt = -1;
-  } else if (sort === "highestPrice") {
-    sortOrder.price = -1;
-  } else if (sort === "lowestPrice") {
-    sortOrder.price = 1;
-  }
-
-  const properties = await PropertyModel.find(filter)
+const getUserProperties = asyncHandler(async (req, res, next) => {
+  const properties = await PropertyModel.find({ createdBy: req.user._id })
     .select(
       "title price country city area bedrooms bathrooms images.secure_url"
     )
@@ -56,4 +37,4 @@ const getProperties = asyncHandler(async (req, res, next) => {
   });
 });
 
-export default getProperties;
+export default getUserProperties;
