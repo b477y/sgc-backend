@@ -12,17 +12,21 @@ const getServiceProviderById = asyncHandler(async (req, res, next) => {
     .lean(); // Converts Mongoose documents to plain JavaScript objects
 
   if (!serviceProvider) {
-    return next(new Error("Server provider not found", { cause: 404 }));
+    return next(new Error("Service provider not found", { cause: 404 }));
   }
 
-  serviceProvider.serviceCategory =
-    serviceProvider.serviceCategory?.name || null;
+  const transformedProvider = {
+    ...serviceProvider,
+    serviceCategory: serviceProvider.serviceCategory?.name || null,
+    images: serviceProvider.images?.map((img) => img.secure_url) || [],
+    logo: serviceProvider.logo?.secure_url || null,
+  };
 
   return successResponse({
     res,
     status: 200,
-    message: "Service providers retrieved successfully",
-    data: { serviceProvider },
+    message: "Service provider retrieved successfully",
+    data: { serviceProvider: transformedProvider },
   });
 });
 

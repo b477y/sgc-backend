@@ -3,7 +3,7 @@ import ServiceCategoryModel from "../../../db/models/ServiceCategory.model.js";
 import successResponse from "../../../utils/response/success.response.js";
 
 const getServiceCategories = asyncHandler(async (req, res, next) => {
-  const services = await ServiceCategoryModel.find().select("name -_id");
+  const services = await ServiceCategoryModel.find().select("name");
   return successResponse({
     res,
     status: 200,

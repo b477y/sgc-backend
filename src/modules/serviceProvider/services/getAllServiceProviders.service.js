@@ -8,16 +8,17 @@ const getAllServiceProviders = asyncHandler(async (req, res, next) => {
       path: "serviceCategory",
       select: "name -_id",
     })
-    .lean(); // Converts Mongoose documents to plain JavaScript objects
+    .lean();
 
   if (!serviceProviders.length) {
     return next(new Error("There are no service providers", { cause: 404 }));
   }
 
-  // Transform serviceProviders to return serviceCategory as a string
   const transformedProviders = serviceProviders.map((provider) => ({
     ...provider,
-    serviceCategory: provider.serviceCategory?.name || null, // Extract the name directly
+    serviceCategory: provider.serviceCategory?.name || null,
+    images: provider.images?.map((img) => img.secure_url) || [],
+    logo: provider.logo?.secure_url || null,
   }));
 
   return successResponse({

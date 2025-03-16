@@ -1,16 +1,18 @@
 import { Router } from "express";
 import getAmenities from "./services/getAmenities.service.js";
-import getPropertyCategories from "./services/getPropertyCategories.service.js";
+import getCategories from "./services/getCategories.service.js";
 import getCities from "./services/getCities.service.js";
 import getResidentialFormData from "./services/getResidentialFormData.service.js";
 import getCommercialFormData from "./services/getCommercialFormData.service.js";
 import getPlotFormData from "./services/getPlotFormData.service.js";
 import getRequestPropertyFormData from "./services/getRequestPropertyFormData.service.js";
+import getCategoryById from "./services/getCategoryById.service.js";
 
 const router = Router();
 
 router.get("/amenities", getAmenities);
-router.get("/categories", getPropertyCategories);
+router.get("/categories", getCategories);
+router.get("/categories/:categoryId", getCategoryById);
 router.get("/cities", getCities);
 router.get("/form-options/add-residential", getResidentialFormData);
 router.get("/form-options/add-commercial", getCommercialFormData);

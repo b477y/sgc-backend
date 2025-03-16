@@ -2,15 +2,17 @@ import CategoryModel from "../../../db/models/Category.model.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
 
-const getCategories = asyncHandler(async (req, res, next) => {
-  const categories = await CategoryModel.find();
+const getCategoryById = asyncHandler(async (req, res, next) => {
+  const { categoryId } = req.params;
+
+  const category = await CategoryModel.findById(categoryId);
 
   return successResponse({
     res,
     status: 200,
-    message: "Categories & subcategories retrieved successfully",
-    data: categories,
+    message: "Category retrieved successfully",
+    data: category,
   });
 });
 
-export default getCategories;
+export default getCategoryById;
