@@ -4,9 +4,11 @@ import propertiesController from "./modules/property/properties.controller.js";
 import servicesController from "./modules/serviceCategory/servicesCategories.controller.js";
 import servicesProviderController from "./modules/serviceProvider/servicesProviders.controller.js";
 import staticController from "./modules/static/static.controller.js";
+import cors from "cors";
 
 const bootstrap = (app, express) => {
   app.use(express.json());
+  app.use(cors({ origin: "*" }));
 
   app.use("/api/static", staticController);
   app.use("/api/properties", propertiesController);
