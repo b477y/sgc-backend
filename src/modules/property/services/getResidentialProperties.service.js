@@ -9,31 +9,27 @@ const transformToRegex = (value) => ({
   $options: "i",
 });
 
-const getProperties = asyncHandler(async (req, res, next) => {
+const getResidentialProperties = asyncHandler(async (req, res, next) => {
+  
   const { categoryId, subcategoryId } = req.params;
   const { city, purpose, type, furnished, sort } = req.query;
   const filter = {};
+  console.log("🚀 Incoming Params:", req.params);
+  console.log("🔹 categoryId Type:", typeof req.params.categoryId);
 
-  let categoryName = null;
-  let subcategoryName = null;
-
-  if (categoryId) {
-    // Fetch category details
-    const category = await CategoryModel.findById(categoryId).lean();
-    if (!category) {
-      return next(new Error("Category not found", { cause: 404 }));
-    }
-
-    categoryName = category.categoryName;
-
-    // Find the corresponding subcategory key
-    if (subcategoryId) {
-      const subcategory = category.subcategories.find(
-        (sub) => sub._id.toString() === subcategoryId
-      );
-      subcategoryName = subcategory ? subcategory.key : null; // Extract 'key' for filtering
-    }
+  // Fetch category details
+  const category = await CategoryModel.findById(categoryId).lean();
+  if (!category) {
+    return next(new Error("Category not found", { cause: 404 }));
   }
+
+  const categoryName = category.categoryName;
+
+  // Find the corresponding subcategory key
+  const subcategory = category.subcategories.find(
+    (sub) => sub._id.toString() === subcategoryId
+  );
+  const subcategoryName = subcategory ? subcategory.key : null; // Extract 'key' for filtering
 
   // Define fields to filter dynamically
   const fields = {
@@ -41,10 +37,9 @@ const getProperties = asyncHandler(async (req, res, next) => {
     purpose,
     type,
     furnished,
+    category: categoryName,
+    type: subcategoryName,
   };
-
-  if (categoryName) fields.category = categoryName;
-  if (subcategoryName) fields.type = subcategoryName;
 
   Object.keys(fields).forEach((key) => {
     if (fields[key]) {
@@ -82,9 +77,9 @@ const getProperties = asyncHandler(async (req, res, next) => {
   return successResponse({
     res,
     status: 200,
-    message: "Properties retrieved successfully",
+    message: "Residential properties retrieved successfully",
     data: properties,
   });
 });
 
-export default getProperties;
+export default getResidentialProperties;

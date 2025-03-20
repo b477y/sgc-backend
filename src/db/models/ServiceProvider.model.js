@@ -1,14 +1,21 @@
 import mongoose from "mongoose";
+import { Cities, Countries } from "../../utils/enum/enums.js";
 
-const ServiceProvider = new mongoose.Schema({
+const ServiceProviderSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   about: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   website: { type: String },
   phone: { type: String, required: true },
+  country: {
+    type: String,
+    required: true,
+    enum: Object.keys(Countries),
+  },
   city: {
     type: String,
     required: true,
+    enum: Object.keys(Cities),
   },
   socialMediaLinks: {
     facebook: { type: String },
@@ -27,5 +34,5 @@ const ServiceProvider = new mongoose.Schema({
 
 const ServiceProviderModel =
   mongoose.models.ServiceProvider ||
-  mongoose.model("ServiceProvider", ServiceProvider);
+  mongoose.model("ServiceProvider", ServiceProviderSchema);
 export default ServiceProviderModel;

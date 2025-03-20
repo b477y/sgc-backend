@@ -9,6 +9,7 @@ import {
   Orientation,
   PropertyPurpose,
   RealEstateSituation,
+  RentalFrequencies,
 } from "../../utils/enum/enums.js";
 
 // Extract main categories
@@ -94,6 +95,13 @@ const PropertySchema = new Schema(
         return this.category !== "PLOT";
       },
     },
+    rental_frequency: {
+      type: String,
+      required: function () {
+        return this.purpose === "RENT";
+      },
+      enum: Object.keys(RentalFrequencies),
+    },
     orientation: {
       type: String,
       required: true,
@@ -150,6 +158,26 @@ PropertySchema.pre("validate", function (next) {
       .flat(); // Flatten again after splitting
   }
 
+  next();
+});
+
+PropertySchema.pre("save", function (next) {
+  if (this.price_currency)
+    this.price_currency = this.price_currency.toUpperCase();
+  if (this.monthly_service_currency)
+    this.monthly_service_currency = this.monthly_service_currency.toUpperCase();
+  if (this.orientation)
+    this.orientation = this.orientation.replace(/\s/g, "_").toUpperCase();
+  if (this.real_estate_situation)
+    this.real_estate_situation = this.real_estate_situation
+      .replace(/\s/g, "_")
+      .toUpperCase();
+  if (this.furnished) this.furnished = this.furnished.toUpperCase();
+  if (this.amenities && Array.isArray(this.amenities)) {
+    this.amenities = this.amenities.map((amenity) =>
+      amenity.replace(/\s/g, "_").toUpperCase()
+    );
+  }
   next();
 });
 

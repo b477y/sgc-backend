@@ -128,6 +128,11 @@ export const Currency = Object.freeze({
   EUR: "EUR",
 });
 
+export const Languages = Object.freeze({
+  AR: "AR",
+  EN: "EN",
+});
+
 export const Categories = Object.freeze({
   RESIDENTIAL: {
     label: "Residential",
@@ -198,11 +203,12 @@ export const FurnishedStatus = Object.freeze({
 
 export const PropertyPurpose = Object.freeze({
   SALE: "For Sale",
-  RENT: "For RENT",
+  RENT: "For Rent",
 });
 
 export const UserRole = Object.freeze({
   ADMIN: "Admin",
+  AGENT: "Agent",
   USER: "User",
 });
 
@@ -221,35 +227,17 @@ export const OtpTypes = Object.freeze({
   FORGOT_PASSWORD: "Forgot Password",
 });
 
-export const JobLocation = Object.freeze({
-  ONSITE: "Onsite",
-  REMOTE: "Remote",
-  HYBRID: "Hybrid",
+export const RentalFrequencies = Object.freeze({
+  MONTHLY: "Monthly",
+  YEARLY: "Yearly",
+  WEEKLY: "Weekly",
+  DAILY: "Daily",
 });
 
-export const WorkingTime = Object.freeze({
-  PART_TIME: "Part-Time",
-  FULL_TIME: "Full-Time",
-});
-
-export const SeniorityLevel = Object.freeze({
-  FRESH: "Fresh",
-  JUNIOR: "Junior",
-  MID_LEVEL: "Mid-Level",
-  SENIOR: "Senior",
-  TEAM_LEAD: "Team Lead",
-  CTO: "CTO",
-});
-
-export const ApplicationStatus = Object.freeze({
-  PENDING: "Pending",
-  ACCEPTED: "Accepted",
-  VIEWED: "Viewed",
-  IN_CONSIDERATION: "In Consideration",
-  REJECTED: "Rejected",
-});
-
-export const BanActions = Object.freeze({
-  BAN: "Ban",
-  UNBAN: "Unban",
-});
+// export const AgencyStatus = Object.freeze({
+//   PENDING: "Pending",
+//   ACCEPTED: "Accepted",
+//   VIEWED: "Viewed",
+//   IN_CONSIDERATION: "In Consideration",
+//   REJECTED: "Rejected",
+// });

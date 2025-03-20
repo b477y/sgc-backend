@@ -12,20 +12,14 @@ const mainCategories = Object.keys(Categories); // ["RESIDENTIAL", "PLOT", "COMM
 
 // Extract subcategories correctly
 const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
-  Object.entries(sub.options).map(([key, value]) => ({
+  Object.keys(sub.options).map((key) => ({
     key,
-    value,
     mainCategory: main,
   }))
 );
 
 const RequestedPropertySchema = new Schema(
   {
-    // userId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "User",
-    //   required: true,
-    // }, // Reference to the user
     country: { type: String, enum: Object.keys(Countries), required: true },
     city: { type: String, enum: Object.keys(Cities), required: true },
     wanted_for: {
@@ -43,12 +37,15 @@ const RequestedPropertySchema = new Schema(
       required: true,
       validate: {
         validator: function (value) {
+          if (!this.category) return false; // Prevent undefined category error
           return subcategories.some(
             (s) => s.key === value && s.mainCategory === this.category
           );
         },
         message: (props) =>
-          `${props.value} is not a valid subcategory for ${props.instance.category}`,
+          `${props.value} is not a valid subcategory for ${
+            props.instance?.category || "unknown category"
+          }`,
       },
     },
     price_range: {

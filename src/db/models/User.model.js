@@ -1,5 +1,6 @@
 import mongoose, { Schema, Types, model } from "mongoose";
 import { generateHash } from "../../utils/security/hash.security.js";
+import { Currency, Languages } from "../../utils/enum/enums.js";
 
 export const genderTypes = { male: "Male", female: "Female" };
 
@@ -10,54 +11,37 @@ export const roleTypes = {
 };
 export const providerTypes = { google: "Google", system: "System" };
 
-const userSchema = new Schema(
+const UserSchema = new Schema(
   {
-    email: {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    language: {
       type: String,
-      required: true,
-      unique: true,
+      enum: Object.keys(Languages),
+      default: Languages.EN,
     },
-    password: {
+    currency: {
       type: String,
-      required: (data) => {
-        return data?.provider === providerTypes.google ? false : true;
-      },
+      enum: Object.keys(Currency),
+      default: Currency.USD,
     },
-    phoneNumber: {
-      type: String,
-      unique: true,
-      required: (data) => {
-        return data?.provider === providerTypes.google ? false : true;
-      },
-    },
-    address: String,
-    image: { secure_url: String, public_id: String },
-    gender: {
-      type: String,
-      enum: Object.values(genderTypes),
-      default: genderTypes.male,
-    },
+    likedProperties: [{ type: Schema.Types.ObjectId, ref: "Property" }],
     role: {
       type: String,
       enum: Object.values(roleTypes),
       default: roleTypes.user,
     },
     deletedAt: Date,
-    provider: {
-      type: String,
-      enum: Object.values(providerTypes),
-      default: providerTypes.system,
-    },
     changeCredentialsTime: Date,
-    updatedBy: { type: Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next, docs) {
+UserSchema.pre("save", async function (next, docs) {
   this.password = await generateHash({ plaintext: this.password });
   next();
 });
 
-const UserModel = mongoose.models.User || model("User", userSchema);
+const UserModel = mongoose.models.User || model("User", UserSchema);
 export default UserModel;
