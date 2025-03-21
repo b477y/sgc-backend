@@ -6,23 +6,27 @@ const authentication = () => {
   return asyncHandler(async (req, res, next) => {
     const { authorization } = req.headers;
 
-    if (!authorization) {
+    if (!authorization || typeof authorization !== "string") {
       return next(
         new Error("Authorization header is required", { cause: 401 })
       );
     }
 
-    const user = await decodeToken({
-      authorization,
-      tokenType: TokenType.ACCESS,
-    });
+    try {
+      const user = await decodeToken({
+        authorization,
+        tokenType: TokenType.ACCESS,
+      });
 
-    if (!user) {
-      return next(new Error("Unauthorized access", { cause: 401 }));
+      if (!user || !user._id) {
+        return next(new Error("Unauthorized access", { cause: 401 }));
+      }
+
+      req.user = { _id: user._id, role: user.role };
+      next();
+    } catch (error) {
+      return next(new Error("Invalid or expired token", { cause: 401 }));
     }
-
-    req.user = user;
-    next();
   });
 };
 

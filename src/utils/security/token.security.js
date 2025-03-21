@@ -1,86 +1,78 @@
 import jwt from "jsonwebtoken";
-import { TokenType, UserRole } from "../enum/enums.js";
-import UserModel from "../../db/models/User.model.js";
+import { TokenType } from "../enum/enums.js";
+import UserModel from "../../db/models/User.model.js"
 
 export const generateTokens = async ({
   payload,
-  accessTokenSK = null, // optional
-  refreshTokenSK,
+  accessTokenSK = process.env.ACCESS_TOKEN_SK,
+  refreshTokenSK = process.env.REFRESH_TOKEN_SK,
   tokenType = [TokenType.ACCESS, TokenType.REFRESH],
 }) => {
-  if (!payload || !refreshTokenSK) {
-    throw new Error("Payload and refresh token secret key are required.");
+  if (!payload) {
+    throw new Error("Payload is required to generate tokens.");
   }
 
   let tokens = {};
 
-  if (tokenType.includes(TokenType.ACCESS) && accessTokenSK) {
-    tokens.accessToken = jwt.sign(payload, accessTokenSK, {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    });
+  if (tokenType.includes(TokenType.ACCESS)) {
+    if (!accessTokenSK) throw new Error("Access token secret key is missing.");
+    tokens.accessToken = jwt.sign(
+      { _id: payload._id, role: payload.role },
+      accessTokenSK,
+      {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRATION_TIME,
+      }
+    );
   }
 
   if (tokenType.includes(TokenType.REFRESH)) {
-    tokens.refreshToken = jwt.sign(payload, refreshTokenSK, {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    });
+    if (!refreshTokenSK)
+      throw new Error("Refresh token secret key is missing.");
+    tokens.refreshToken = jwt.sign(
+      { _id: payload._id, role: payload.role },
+      refreshTokenSK,
+      {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRATION_TIME,
+      }
+    );
   }
 
   return tokens;
 };
 
 export const verifyToken = ({ token, secretKey } = {}) => {
-  const decoded = jwt.verify(token, secretKey);
-  return decoded;
+  return jwt.verify(token, secretKey);
 };
 
 export const decodeToken = async ({ authorization, tokenType } = {}) => {
-  if (typeof authorization !== "string") {
+  if (typeof authorization !== "string" || !authorization.trim()) {
     throw new Error("Invalid authorization format", { cause: 401 });
   }
 
-  const [bearer, token] = authorization.split(" ");
+  const secretKey =
+    tokenType === TokenType.ACCESS
+      ? process.env.ACCESS_TOKEN_SK
+      : process.env.REFRESH_TOKEN_SK;
 
-  if (!bearer || !token) {
-    throw new Error("Invalid authorization format", { cause: 401 });
+  let decoded;
+  try {
+    decoded = verifyToken({ token: authorization, secretKey });
+  } catch (err) {
+    throw new Error("Invalid or expired token", { cause: 401 });
   }
 
-  let accessTokenSK, refreshTokenSK;
-
-  switch (bearer) {
-    case "Admin":
-      accessTokenSK = process.env.ADMIN_ACCESS_TOKEN_SK;
-      refreshTokenSK = process.env.ADMIN_REFRESH_TOKEN_SK;
-      break;
-    case "Bearer":
-      accessTokenSK = process.env.USER_ACCESS_TOKEN_SK;
-      refreshTokenSK = process.env.USER_REFRESH_TOKEN_SK;
-      break;
-    default:
-      throw new Error("Invalid token type", { cause: 401 });
-  }
-
-  const decoded = verifyToken({
-    token,
-    secretKey: tokenType === TokenType.ACCESS ? accessTokenSK : refreshTokenSK,
-  });
-
-  if (!decoded?.userId) {
+  if (!decoded?._id || !decoded?.role) {
     throw new Error("Invalid token payload", { cause: 401 });
   }
 
-  const user = await UserModel.findOne({
-    _id: decoded.userId,
+  const userExists = await UserModel.exists({
+    _id: decoded._id,
     deletedAt: { $exists: false },
   });
 
-  if (!user) {
+  if (!userExists) {
     throw new Error("Not registered account", { cause: 404 });
   }
 
-  if (user.changeCredentialsTime?.getTime() >= decoded.iat * 1000) {
-    throw new Error("Invalid credentials", { cause: 400 });
-  }
-
-  return { userId: user._id, role: user.role };
+  return { _id: decoded._id, role: decoded.role };
 };

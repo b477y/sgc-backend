@@ -1,17 +1,8 @@
-import mongoose, { Schema, Types, model } from "mongoose";
+import mongoose from "mongoose";
 import { generateHash } from "../../utils/security/hash.security.js";
-import { Currency, Languages } from "../../utils/enum/enums.js";
+import { Currency, Languages, UserRole } from "../../utils/enum/enums.js";
 
-export const genderTypes = { male: "Male", female: "Female" };
-
-export const roleTypes = {
-  user: "User",
-  admin: "Admin",
-  superAdmin: "SuperAdmin",
-};
-export const providerTypes = { google: "Google", system: "System" };
-
-const UserSchema = new Schema(
+const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -21,27 +12,48 @@ const UserSchema = new Schema(
       enum: Object.keys(Languages),
       default: Languages.EN,
     },
+    profilePicture: { secure_url: String, public_id: String },
     currency: {
       type: String,
       enum: Object.keys(Currency),
       default: Currency.USD,
     },
-    likedProperties: [{ type: Schema.Types.ObjectId, ref: "Property" }],
+    likedProperties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
+    isAgent: {
+      type: Boolean,
+      default: false,
+    },
+    agency: {
+      type: mongoose.Types.ObjectId,
+      ref: "Agency",
+      default: null,
+    },
     role: {
       type: String,
-      enum: Object.values(roleTypes),
-      default: roleTypes.user,
+      enum: Object.values(UserRole),
+      default: UserRole.USER,
     },
     deletedAt: Date,
-    changeCredentialsTime: Date,
   },
   { timestamps: true }
 );
 
-UserSchema.pre("save", async function (next, docs) {
-  this.password = await generateHash({ plaintext: this.password });
+UserSchema.pre("save", async function (next) {
+  if (this.isAgent && !this.agency) {
+    return next(new Error("Agents must be associated with an agency."));
+  }
+  if (!this.isAgent && this.agency) {
+    return next(
+      new Error("Non-agents should not be associated with an agency.")
+    );
+  }
+
+  if (this.isModified("password")) {
+    this.password = await generateHash({ plaintext: this.password });
+  }
+
   next();
 });
 
-const UserModel = mongoose.models.User || model("User", UserSchema);
+const UserModel = mongoose.models.User || mongoose.model("User", UserSchema);
 export default UserModel;

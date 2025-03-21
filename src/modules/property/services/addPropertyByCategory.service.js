@@ -23,24 +23,52 @@ const addPropertyByCategory = asyncHandler(async (req, res, next) => {
 
   // Validate purpose (must be either RENT or SALE)
   if (!["RENT", "SALE"].includes(req.body.purpose?.toUpperCase())) {
-    return next(new Error("Invalid purpose. Allowed: RENT, SALE", { cause: 400 }));
+    return next(
+      new Error("Invalid purpose. Allowed: RENT, SALE", { cause: 400 })
+    );
   }
 
   const purpose = req.body.purpose.toUpperCase();
 
   // Validate allowed categories based on purpose
-  if (purpose === "RENT" && !["RESIDENTIAL", "COMMERCIAL"].includes(categoryName)) {
-    return next(new Error("Invalid category for RENT. Only RESIDENTIAL and COMMERCIAL are allowed.", { cause: 400 }));
+  if (
+    purpose === "RENT" &&
+    !["RESIDENTIAL", "COMMERCIAL"].includes(categoryName)
+  ) {
+    return next(
+      new Error(
+        "Invalid category for RENT. Only RESIDENTIAL and COMMERCIAL are allowed.",
+        { cause: 400 }
+      )
+    );
   }
 
-  if (purpose === "SALE" && !["RESIDENTIAL", "COMMERCIAL", "PLOT"].includes(categoryName)) {
-    return next(new Error("Invalid category for SALE. Only RESIDENTIAL, COMMERCIAL, and PLOT are allowed.", { cause: 400 }));
+  if (
+    purpose === "SALE" &&
+    !["RESIDENTIAL", "COMMERCIAL", "PLOT"].includes(categoryName)
+  ) {
+    return next(
+      new Error(
+        "Invalid category for SALE. Only RESIDENTIAL, COMMERCIAL, and PLOT are allowed.",
+        { cause: 400 }
+      )
+    );
   }
 
   // Validate rental_frequency if purpose is RENT
   if (purpose === "RENT") {
-    if (!req.body.rental_frequency || !Object.keys(RentalFrequencies).includes(req.body.rental_frequency.toUpperCase())) {
-      return next(new Error("Invalid rental frequency. Allowed: Daily, Weekly, Monthly, Yearly", { cause: 400 }));
+    if (
+      !req.body.rental_frequency ||
+      !Object.keys(RentalFrequencies).includes(
+        req.body.rental_frequency.toUpperCase()
+      )
+    ) {
+      return next(
+        new Error(
+          "Invalid rental frequency. Allowed: Daily, Weekly, Monthly, Yearly",
+          { cause: 400 }
+        )
+      );
     }
   }
 
@@ -166,7 +194,11 @@ const addPropertyByCategory = asyncHandler(async (req, res, next) => {
   });
 
   if (existingProperty) {
-    return next(new Error("A property with this title and address already exists.", { cause: 400 }));
+    return next(
+      new Error("A property with this title and address already exists.", {
+        cause: 400,
+      })
+    );
   }
 
   try {
@@ -185,17 +217,24 @@ const addPropertyByCategory = asyncHandler(async (req, res, next) => {
       }));
     }
   } catch (error) {
-    return res.status(500).json({ message: "Error uploading files", stack: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error uploading files", stack: error.message });
   }
 
   // Create new property with transformed data
   const newProperty = await PropertyModel.create({
     ...transformedData,
+    createdBy: req.user._id,
     images,
   });
 
   if (!newProperty) {
-    return next(new Error("An error occurred while adding the new property", { cause: 400 }));
+    return next(
+      new Error("An error occurred while adding the new property", {
+        cause: 400,
+      })
+    );
   }
 
   return successResponse({

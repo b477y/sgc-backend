@@ -126,6 +126,7 @@ const PropertySchema = new Schema(
     area: { type: Number, required: true }, // Property area in square meters
     amenities: [{ type: String, enum: Object.keys(Amenities), required: true }],
     images: [{ secure_url: String, public_id: String }],
+    createdBy: { type: mongoose.Types.ObjectId, ref: "User", required: true },
     createdAt: { type: Date, default: Date.now, required: true },
     contact: { type: String, required: true },
   },
