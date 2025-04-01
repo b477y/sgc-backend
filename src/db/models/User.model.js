@@ -18,20 +18,22 @@ const UserSchema = new mongoose.Schema(
       enum: Object.keys(Currency),
       default: Currency.USD,
     },
+    properties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
     likedProperties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
-    isAgent: {
-      type: Boolean,
-      default: false,
-    },
     agency: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Agency",
-      default: null,
+      default: undefined,
     },
     role: {
       type: String,
       enum: Object.values(UserRole),
       default: UserRole.USER,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: undefined,
     },
     deletedAt: Date,
   },
@@ -39,13 +41,39 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.pre("save", async function (next) {
-  if (this.isAgent && !this.agency) {
-    return next(new Error("Agents must be associated with an agency."));
+  if (
+    (this.role === UserRole.AGENT || this.role === UserRole.AGENCY_OWNER) &&
+    !this.agency
+  ) {
+    return next(new Error(`${this.role} must be associated with an agency.`));
   }
-  if (!this.isAgent && this.agency) {
+
+  if (this.role === UserRole.USER && this.agency) {
     return next(
-      new Error("Non-agents should not be associated with an agency.")
+      new Error("Regular users cannot be associated with an agency.")
     );
+  }
+
+  if (
+    ![UserRole.AGENT, UserRole.AGENCY_OWNER].includes(this.role) &&
+    this.agency
+  ) {
+    return next(
+      new Error(
+        "Only agents or agency owners can be associated with an agency."
+      )
+    );
+  }
+
+  if (
+    [
+      UserRole.USER,
+      UserRole.AGENT,
+      UserRole.AGENCY_OWNER,
+      UserRole.ADMIN,
+    ].filter((role) => this.role === role).length > 1
+  ) {
+    return next(new Error("A user cannot have multiple roles simultaneously."));
   }
 
   if (this.isModified("password")) {

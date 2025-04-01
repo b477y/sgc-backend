@@ -208,6 +208,7 @@ export const PropertyPurpose = Object.freeze({
 
 export const UserRole = Object.freeze({
   ADMIN: "Admin",
+  AGENCY_OWNER: "Agency Owner",
   AGENT: "Agent",
   USER: "User",
 });

@@ -2,8 +2,8 @@ import PropertyModel from "../../../db/models/Property.model.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
 import CategoryModel from "../../../db/models/Category.model.js";
+import paginate from "../../../utils/pagination/pagination.js";
 
-// Utility function to transform input to case-insensitive regex
 const transformToRegex = (value) => ({
   $regex: `^${value.replace(/\s+/g, "_").toUpperCase()}$`,
   $options: "i",
@@ -11,14 +11,13 @@ const transformToRegex = (value) => ({
 
 const getProperties = asyncHandler(async (req, res, next) => {
   const { categoryId, subcategoryId } = req.params;
-  const { city, purpose, type, furnished, sort } = req.query;
+  const { city, purpose, type, furnished, sort, page, limit } = req.query;
   const filter = {};
 
   let categoryName = null;
   let subcategoryName = null;
 
   if (categoryId) {
-    // Fetch category details
     const category = await CategoryModel.findById(categoryId).lean();
     if (!category) {
       return next(new Error("Category not found", { cause: 404 }));
@@ -26,23 +25,15 @@ const getProperties = asyncHandler(async (req, res, next) => {
 
     categoryName = category.categoryName;
 
-    // Find the corresponding subcategory key
     if (subcategoryId) {
       const subcategory = category.subcategories.find(
         (sub) => sub._id.toString() === subcategoryId
       );
-      subcategoryName = subcategory ? subcategory.key : null; // Extract 'key' for filtering
+      subcategoryName = subcategory ? subcategory.key : null;
     }
   }
 
-  // Define fields to filter dynamically
-  const fields = {
-    city,
-    purpose,
-    type,
-    furnished,
-  };
-
+  const fields = { city, purpose, type, furnished };
   if (categoryName) fields.category = categoryName;
   if (subcategoryName) fields.type = subcategoryName;
 
@@ -58,16 +49,21 @@ const getProperties = asyncHandler(async (req, res, next) => {
     highestPrice: { price: -1 },
     lowestPrice: { price: 1 },
   };
-
   const sortOrder = sortOptions[sort] || {};
 
-  // Fetch properties with filtering & sorting
-  const properties = await PropertyModel.find(filter)
-    .select(
-      "title price_currency price category type country city area bedrooms bathrooms images.secure_url"
-    )
-    .sort(sortOrder)
-    .lean();
+  // Fetch properties with pagination
+  const {
+    data: properties,
+    page: currentPage,
+    limit: pageSize,
+    total,
+  } = await paginate({
+    page,
+    limit,
+    model: PropertyModel, // Pass the model (not an executed query!)
+    filter,
+    sort: sortOrder,
+  });
 
   if (!properties.length) {
     return next(new Error("No properties found.", { cause: 404 }));
@@ -84,6 +80,12 @@ const getProperties = asyncHandler(async (req, res, next) => {
     status: 200,
     message: "Properties retrieved successfully",
     data: properties,
+    meta: {
+      page: currentPage,
+      limit: pageSize,
+      total, // Include total count
+      totalPages: Math.ceil(total / pageSize),
+    },
   });
 });
 

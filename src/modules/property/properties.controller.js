@@ -8,7 +8,6 @@ import getProperties from "./services/getProperties.service.js";
 import requestProperty from "./services/requestProperty.service.js";
 import getProperty from "./services/getProperty.service.js";
 import authentication from "../../middlewares/authentication.middleware.js";
-import getResidentialProperties from "./services/getResidentialProperties.service.js";
 import addPropertyByCategory from "./services/addPropertyByCategory.service.js";
 import * as propertiesService from "./services/properties.service.js";
 
@@ -44,3 +43,9 @@ router.get("/category/:categoryId", getProperties);
 router.get("/category/:categoryId/:subcategoryId", getProperties);
 
 export default router;
+
+// will be deleted
+// getUserProperties.service.js
+// getResidentialProperties.service.js
+// requestProperty.service.js
+// getProperty.service.js

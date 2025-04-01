@@ -3,7 +3,7 @@ import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
 import { cloud } from "../../../utils/multer/cloudinary.multer.js";
 import CategoryModel from "../../../db/models/Category.model.js";
-import { RentalFrequencies } from "../../../utils/enum/enums.js";
+import { RentalFrequencies, UserRole } from "../../../utils/enum/enums.js";
 
 // Utility function to transform input to case-insensitive ENUM format
 const transformToEnumFormat = (value) =>
@@ -11,6 +11,13 @@ const transformToEnumFormat = (value) =>
 
 const addPropertyByCategory = asyncHandler(async (req, res, next) => {
   const { categoryId, subcategoryId } = req.params;
+
+  let agencyId = null;
+
+  if (req.user.role === UserRole.AGENT && req.user.agency) {
+    agencyId = req.user.agency; // Link property to agency
+  }
+
   let images = [];
 
   // Fetch category details
@@ -226,6 +233,7 @@ const addPropertyByCategory = asyncHandler(async (req, res, next) => {
   const newProperty = await PropertyModel.create({
     ...transformedData,
     createdBy: req.user._id,
+    agency: agencyId,
     images,
   });
 

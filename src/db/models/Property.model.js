@@ -129,6 +129,11 @@ const PropertySchema = new Schema(
     createdBy: { type: mongoose.Types.ObjectId, ref: "User", required: true },
     createdAt: { type: Date, default: Date.now, required: true },
     contact: { type: String, required: true },
+    agency: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Agency",
+      default: null,
+    }, // Only for agents
   },
   { timestamps: true }
 );
