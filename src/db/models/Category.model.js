@@ -2,7 +2,10 @@ import mongoose from "mongoose";
 
 const SubcategorySchema = new mongoose.Schema({
   key: { type: String, required: true },
-  label: { type: String, required: true },
+  label: {
+    en: { type: String, required: true },
+    ar: { type: String, required: true },
+  },
 });
 
 const CategorySchema = new mongoose.Schema({
@@ -11,7 +14,10 @@ const CategorySchema = new mongoose.Schema({
     enum: ["RESIDENTIAL", "PLOT", "COMMERCIAL"], // Ensure valid values
     required: true,
   },
-  label: { type: String, required: true },
+  label: {
+    en: { type: String, required: true },
+    ar: { type: String, required: true },
+  },
   subcategories: { type: [SubcategorySchema], required: true }, // Fixed array issue
 });
 

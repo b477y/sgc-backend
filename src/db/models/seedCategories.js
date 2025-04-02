@@ -4,61 +4,90 @@ import CategoryModel from "./Category.model.js"; // Adjust path as needed
 const categories = [
   {
     categoryName: "RESIDENTIAL",
-    label: "Residential",
+    label: { en: "Residential", ar: "سكني" },
     subcategories: [
-      { key: "APARTMENT", label: "Apartment" },
-      { key: "HOUSE", label: "House" },
-      { key: "FARM", label: "Farm" },
-      { key: "RESIDENTIAL_BUILDING", label: "Residential Building" },
-      { key: "TOURISM", label: "Tourism" },
+      { key: "APARTMENT", label: { en: "Apartment", ar: "شقة" } },
+      { key: "HOUSE", label: { en: "House", ar: "منزل" } },
+      { key: "FARM", label: { en: "Farm", ar: "مزرعة" } },
+      {
+        key: "RESIDENTIAL_BUILDING",
+        label: { en: "Residential Building", ar: "مبنى سكني" },
+      },
+      { key: "TOURISM", label: { en: "Tourism", ar: "سياحة" } },
     ],
   },
   {
     categoryName: "PLOT",
-    label: "Plot",
+    label: { en: "Plot", ar: "قطعة أرض" },
     subcategories: [
-      { key: "COMMERCIAL_PLOT", label: "Commercial Plot" },
-      { key: "INDUSTRIAL_LAND", label: "Industrial Land" },
-      { key: "RESIDENTIAL_PLOT", label: "Residential Plot" },
-      { key: "AGRICULTURAL_PLOT", label: "Agricultural Plot" },
+      {
+        key: "COMMERCIAL_PLOT",
+        label: { en: "Commercial Plot", ar: "قطعة تجارية" },
+      },
+      {
+        key: "INDUSTRIAL_LAND",
+        label: { en: "Industrial Land", ar: "أرض صناعية" },
+      },
+      {
+        key: "RESIDENTIAL_PLOT",
+        label: { en: "Residential Plot", ar: "قطعة سكنية" },
+      },
+      {
+        key: "AGRICULTURAL_PLOT",
+        label: { en: "Agricultural Plot", ar: "أرض زراعية" },
+      },
     ],
   },
   {
     categoryName: "COMMERCIAL",
-    label: "Commercial",
+    label: { en: "Commercial", ar: "تجاري" },
     subcategories: [
-      { key: "OFFICE", label: "Office" },
-      { key: "SHOP", label: "Shop" },
-      { key: "WAREHOUSE", label: "Warehouse" },
-      { key: "COMMERCIAL_FLOOR", label: "Commercial Floor" },
-      { key: "COMMERCIAL_BUILDING", label: "Commercial Building" },
-      { key: "FACTORY", label: "Factory" },
-      { key: "SHOWROOM", label: "Showroom" },
-      { key: "RESTAURANT", label: "Restaurant" },
-      { key: "HOTEL", label: "Hotel" },
-      { key: "SCHOOL", label: "School" },
-      { key: "BEAUTY_SALON", label: "Beauty Salon" },
+      { key: "OFFICE", label: { en: "Office", ar: "مكتب" } },
+      { key: "SHOP", label: { en: "Shop", ar: "متجر" } },
+      { key: "WAREHOUSE", label: { en: "Warehouse", ar: "مستودع" } },
+      {
+        key: "COMMERCIAL_FLOOR",
+        label: { en: "Commercial Floor", ar: "طابق تجاري" },
+      },
+      {
+        key: "COMMERCIAL_BUILDING",
+        label: { en: "Commercial Building", ar: "مبنى تجاري" },
+      },
+      { key: "FACTORY", label: { en: "Factory", ar: "مصنع" } },
+      { key: "SHOWROOM", label: { en: "Showroom", ar: "معرض" } },
+      { key: "RESTAURANT", label: { en: "Restaurant", ar: "مطعم" } },
+      { key: "HOTEL", label: { en: "Hotel", ar: "فندق" } },
+      { key: "SCHOOL", label: { en: "School", ar: "مدرسة" } },
+      { key: "BEAUTY_SALON", label: { en: "Beauty Salon", ar: "صالون تجميل" } },
     ],
   },
 ];
 
 async function seedCategories() {
   try {
-    await mongoose.connect("mongodb+srv://sgcatsyria:JjzTk9BhRWnrKGGg@sgccluster.louc2.mongodb.net/sgc?retryWrites=true&w=majority");
+    console.log("🌱 Connecting to database...");
+    await mongoose.connect(
+      "mongodb+srv://sgcatsyria:JjzTk9BhRWnrKGGg@sgccluster.louc2.mongodb.net/sgc?retryWrites=true&w=majority",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+    );
 
-    console.log("🌱 Connected to database...");
+    console.log("✅ Connected to database.");
 
-    await CategoryModel.deleteMany(); // Clear existing data
-    console.log("🗑️ Existing categories removed.");
+    console.log("🗑️ Deleting existing categories...");
+    await CategoryModel.deleteMany();
 
-    await CategoryModel.insertMany(categories); // Insert new categories
-    console.log("✅ Categories inserted successfully!");
+    console.log("📥 Inserting new categories...");
+    await CategoryModel.insertMany(categories);
 
-    mongoose.connection.close(); // Close connection
-    console.log("🔌 Disconnected from database.");
+    console.log("✅ Seeding completed successfully!");
   } catch (error) {
     console.error("❌ Seeding failed:", error);
-    mongoose.connection.close();
+  } finally {
+    await mongoose.disconnect();
+    console.log("🔌 Disconnected from database.");
   }
 }
 

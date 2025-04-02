@@ -1,5 +1,6 @@
 import AgencyModel from "../../../db/models/Agency.model.js";
 import PropertyModel from "../../../db/models/Property.model.js";
+import CategoryModel from "../../../db/models/Category.model.js";
 import { cloud } from "../../../utils/multer/cloudinary.multer.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
@@ -11,23 +12,42 @@ const transformToRegex = (value) => ({
   $regex: `^${value.replace(/\s+/g, "_").toUpperCase()}$`,
   $options: "i",
 });
+import {
+  PropertyPurpose,
+  FurnishedStatus,
+  Orientation,
+  Currency,
+  Countries,
+  Cities,
+  Amenities,
+  RealEstateSituation,
+} from "../../../utils/enum/enums.js";
 
 export const getAgencyProperties = asyncHandler(async (req, res, next) => {
   const { agencyId } = req.params;
   const { city, purpose, type, furnished, sort, page, limit } = req.query;
-  const filter = { agency: agencyId }; // Ensure properties belong to the given agency
+  const language = req.headers["accept-language"]?.split(",")[0] || "en"; // Default to English
+
+  const filter = { agency: agencyId };
 
   // Validate agency exists
   const agencyExists = await AgencyModel.findById(agencyId).lean();
   if (!agencyExists) {
-    return next(new Error("Agency not found", { cause: 404 }));
+    return next(
+      new Error(language === "ar" ? "الوكالة غير موجودة" : "Agency not found", {
+        cause: 404,
+      })
+    );
   }
+
+  // Load category data
+  const categories = await CategoryModel.find().lean();
 
   // Define dynamic filters
   const fields = { city, purpose, type, furnished };
   Object.keys(fields).forEach((key) => {
     if (fields[key]) {
-      filter[key] = transformToRegex(fields[key]); // Convert input to case-insensitive regex
+      filter[key] = transformToRegex(fields[key]);
     }
   });
 
@@ -55,21 +75,98 @@ export const getAgencyProperties = asyncHandler(async (req, res, next) => {
 
   if (!properties.length) {
     return next(
-      new Error("No properties found for this agency", { cause: 404 })
+      new Error(
+        language === "ar"
+          ? "لا توجد عقارات لهذه الوكالة"
+          : "No properties found for this agency",
+        { cause: 404 }
+      )
     );
   }
 
-  // Optimize property data (return only essential fields)
-  properties.forEach((property) => {
-    property.image = property.images?.[0]?.secure_url || null; // Extract first image only
-    delete property.images; // Remove full images array
-  });
+  // Map category & type dynamically from database
+  const getLocalizedCategory = (categoryKey) => {
+    const category = categories.find((cat) => cat.categoryName === categoryKey);
+    return category ? category.label[language] : categoryKey; // Default to categoryKey if not found
+  };
+
+  const getLocalizedType = (typeKey) => {
+    const category = categories.find((cat) =>
+      cat.subcategories.some((sub) => sub.key === typeKey)
+    );
+    const subcategory = category?.subcategories.find(
+      (sub) => sub.key === typeKey
+    );
+    return subcategory ? subcategory.label[language] : typeKey; // Default to typeKey if not found
+  };
+
+  // Optimize & Localize Property Data
+  const localizedProperties = properties.map((property) => ({
+    _id: property._id,
+    purpose:
+      language === "ar"
+        ? PropertyPurpose[property.purpose]?.ar
+        : PropertyPurpose[property.purpose]?.en,
+    country:
+      language === "ar"
+        ? Countries[property.country]?.ar
+        : Countries[property.country]?.en,
+    city:
+      language === "ar" ? Cities[property.city]?.ar : Cities[property.city]?.en,
+    category: getLocalizedCategory(property.category),
+    type: getLocalizedType(property.type),
+    title: property.title,
+    description: property.description,
+    price_currency:
+      language === "ar"
+        ? Currency[property.price_currency]?.ar
+        : property.price_currency,
+    price: property.price,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    livingrooms: property.livingrooms,
+    kitchen: property.kitchen,
+    balconies: property.balconies,
+    floor_number: property.floor_number,
+    orientation:
+      language === "ar"
+        ? Orientation[property.orientation]?.ar
+        : Orientation[property.orientation]?.en,
+    monthly_service_currency:
+      language === "ar"
+        ? Currency[property.monthly_service_currency]?.ar
+        : property.monthly_service_currency,
+    monthly_service: property.monthly_service,
+    real_estate_situation:
+      language === "ar"
+        ? RealEstateSituation[property.real_estate_situation]?.ar ||
+          property.real_estate_situation
+        : RealEstateSituation[property.real_estate_situation]?.en ||
+          property.real_estate_situation,
+    furnished:
+      language === "ar"
+        ? FurnishedStatus[property.furnished]?.ar
+        : FurnishedStatus[property.furnished]?.en,
+    area: property.area,
+    amenities: property.amenities.map((amenity) =>
+      language === "ar" ? Amenities[amenity]?.ar : Amenities[amenity]?.en
+    ),
+    createdBy: property.createdBy,
+    contact: property.contact,
+    agency: property.agency,
+    createdAt: property.createdAt,
+    updatedAt: property.updatedAt,
+    image: property.images?.[0]?.secure_url || null, // Extract first image only
+  }));
 
   return successResponse({
     res,
     status: 200,
-    message: "Agency properties retrieved successfully",
-    data: properties,
+    message:
+      language === "ar"
+        ? "تم استرجاع العقارات الخاصة بالوكالة بنجاح"
+        : "Agency properties retrieved successfully",
+    data: localizedProperties,
     meta: {
       page: currentPage,
       limit: pageSize,
