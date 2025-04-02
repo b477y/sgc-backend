@@ -79,8 +79,9 @@ export const getAgencyProperties = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Passing the agent ID in the parameters to retrieve properties created by the specific agent
 export const getPropertiesByAgent = asyncHandler(async (req, res, next) => {
-  const { agentId } = req.user._id; // Use agentId from the authenticated user's info
+  const { agentId } = req.params;
   const {
     city,
     purpose,
@@ -163,11 +164,17 @@ export const createAgencyWithOwner = asyncHandler(async (req, res, next) => {
     city,
     description,
   } = req.body;
+
   const adminId = req.user._id;
   let logo;
 
-  // Check if email is already registered
-  const existingUser = await UserModel.findOne({ email });
+  // Standardize input values for consistency
+  const formattedAgencyName = agencyName.trim();
+  const formattedCountry = country.trim().toUpperCase(); // Store as a string
+  const formattedCity = city.trim().toUpperCase(); // Store as a string
+
+  // Check if agency owner email is already registered
+  const existingUser = await UserModel.findOne({ email: agencyOwnerEmail });
   if (existingUser) {
     return next(new Error("Email already registered", { cause: 400 }));
   }
@@ -176,7 +183,7 @@ export const createAgencyWithOwner = asyncHandler(async (req, res, next) => {
   if (req.files?.logo) {
     try {
       const uploadedLogo = await cloud.uploader.upload(req.files.logo[0].path, {
-        folder: `${process.env.APP_NAME}/agencies/${name}/logo`,
+        folder: `${process.env.APP_NAME}/agencies/${formattedAgencyName}/logo`,
       });
       logo = {
         secure_url: uploadedLogo.secure_url,
@@ -187,26 +194,30 @@ export const createAgencyWithOwner = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // Create agency owner user
-  const newAgencyOwner = await UserModel.create({
-    name: agencyOwnerName,
-    email: agencyOwnerEmail,
-    password,
-    role: UserRole.AGENCY_OWNER,
-  });
-
-  // Create agency and link to the owner
+  // Create agency first
   const newAgency = await AgencyModel.create({
-    name: agencyName,
+    name: formattedAgencyName,
     email: agencyEmail,
     phone: agencyPhone,
-    country,
-    city,
+    country: formattedCountry, // Store as string
+    city: formattedCity, // Store as string
     description,
     logo,
-    owner: newAgencyOwner._id, // Associate agency with owner
-    createdBy: adminId, // The admin who created this agency
+    createdBy: adminId, // Admin creating the agency
   });
+
+  // Create agency owner user and associate with agency
+  const newAgencyOwner = await UserModel.create({
+    name: agencyOwnerName.trim(),
+    email: agencyOwnerEmail.toLowerCase(),
+    password,
+    role: UserRole.AGENCY_OWNER,
+    agency: newAgency._id, // Link owner to agency
+  });
+
+  // Update agency with owner ID
+  newAgency.owner = newAgencyOwner._id;
+  await newAgency.save();
 
   return successResponse({
     res,
@@ -251,6 +262,10 @@ export const addAgent = asyncHandler(async (req, res, next) => {
     role: UserRole.AGENT,
     agency: agency._id, // Associate agent with the agency
     createdBy: req.user._id, // Agency Owner
+  });
+
+  const addAgent = await AgencyModel.findByIdAndUpdate(agency._id, {
+    $addToSet: { agents: req.user._id },
   });
 
   return successResponse({
@@ -329,9 +344,15 @@ export const getAgents = asyncHandler(async (req, res, next) => {
   });
 });
 
-export const getAgencyAgents = asyncHandler(async (req, res, next) => {
+export const getAgencyDetails = asyncHandler(async (req, res, next) => {
   const { agencyId } = req.params;
   const { page = 1, limit = 10 } = req.query; // Pagination for listing agents
+
+  const agency = await AgencyModel.findById(agencyId).lean();
+
+  if (!agency) {
+    return next(new Error("Agency not found", { cause: 404 }));
+  }
 
   // Fetch agents that are associated with a specific agency
   const agents = await UserModel.find({ agency: agencyId })
@@ -349,8 +370,9 @@ export const getAgencyAgents = asyncHandler(async (req, res, next) => {
   return successResponse({
     res,
     status: 200,
-    message: "Agency agents retrieved successfully",
+    message: "Agency details retrieved successfully",
     data: {
+      agency,
       agents,
       meta: {
         page: Number(page),

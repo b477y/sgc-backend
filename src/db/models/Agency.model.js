@@ -22,7 +22,7 @@ const AgencySchema = new mongoose.Schema(
     deletedAt: Date,
     logo: { secure_url: String, public_id: String },
     createdBy: { type: mongoose.Types.ObjectId, ref: "User", required: true },
-    owner: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+    owner: { type: mongoose.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

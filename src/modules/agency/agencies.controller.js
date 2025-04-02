@@ -1,4 +1,4 @@
-import express from "express";
+import { Router } from "express";
 // import { authorizeRoles } from "../../../middlewares/authentication.middleware.js";
 // import addProperty from "../services/addProperty.service.js";
 import * as agencyService from "./services/agencies.service.js";
@@ -10,16 +10,25 @@ import {
   uploadCloudFile,
 } from "../../utils/multer/cloud.multer.js";
 
-const router = express.Router();
+const router = Router();
 
-// router.post("/", authorizeRoles("Agent", "User"), addProperty);
-// // Both agents and normal users can add properties
+// get agencies
+router.get("/listing", agencyService.getAgencies);
 
-router.get("/agency/:agencyId", agencyService.getAgencyProperties);
-// Normal users can view agency properties
+// get agents
+router.get("/agents/listing", agencyService.getAgents);
+
+// get agency agents
+router.get("/:agencyId", agencyService.getAgencyDetails);
+
+router.get("/:agencyId/properties", agencyService.getAgencyProperties);
+// Normal users can view agency properties (done)
+
+router.get("/agent/:agentId", agencyService.getPropertiesByAgent);
+// Normal users can view agent properties (done)
 
 router.post(
-  "/agency",
+  "/",
   authentication(),
   authorization(UserRole.ADMIN),
   uploadCloudFile(fileValidations.image).fields([
@@ -29,22 +38,15 @@ router.post(
 );
 // Only admins can add agencies with owners
 
-// router.post(
-//   "/create-agency-with-owner",
-//   authentication(),
-//   authorization(UserRole.ADMIN),
-//   agencyService.createAgencyWithOwner
-// );
-
 router.post(
-  "/agency/:agencyId/agent",
+  "/:agencyId/add-agent",
   authentication(),
   authorization(UserRole.AGENCY_OWNER),
-  uploadCloudFile(fileValidations.image).fields([
-    { name: "logo", maxCount: 1 },
-  ]),
   agencyService.addAgent
 );
-// Only agency owner able to add agents
+// Only admins can add agencies with owners
+
+// 2 endpoints remains
+
 
 export default router;
