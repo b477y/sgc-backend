@@ -9,11 +9,16 @@ import requestProperty from "./services/requestProperty.service.js";
 import getProperty from "./services/getProperty.service.js";
 import authentication from "../../middlewares/authentication.middleware.js";
 import addPropertyByCategory from "./services/addPropertyByCategory.service.js";
-import * as propertiesService from "./services/properties.service.js";
+// import * as propertiesService from "./services/properties.service.js";
+import getUserProperties from "./services/getUserProperties.service.js";
 
 const router = Router();
 
-router.get("/by-user", authentication(), propertiesService.getUserProperties);
+router.get("/", getProperties);
+router.get("/property/:propertyId", getProperty);
+router.get("/by-user", authentication(), getUserProperties);
+
+router.post("/request", requestProperty);
 
 router.post(
   "/",
@@ -32,16 +37,9 @@ router.post(
   addPropertyByCategory
 );
 
-router.post("/request", requestProperty);
-
-router.get("/", getProperties);
-
-router.get("/:propertyId", getProperty);
-
 router.get("/category/:categoryId", getProperties);
 
 router.get("/category/:categoryId/:subcategoryId", getProperties);
-
 export default router;
 
 // will be deleted

@@ -3,6 +3,11 @@ import ServiceProviderModel from "../../../db/models/ServiceProvider.model.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import ServiceCategoryModel from "../../../db/models/ServiceCategory.model.js";
 import { cloud } from "../../../utils/multer/cloudinary.multer.js";
+import { Cities, Countries } from "../../../utils/enum/enums.js";
+
+// Function to normalize input to enum format
+const transformToEnumFormat = (value) =>
+  value.trim().replace(/\s+/g, "_").toUpperCase();
 
 const addServiceProvider = asyncHandler(async (req, res, next) => {
   const {
@@ -11,6 +16,7 @@ const addServiceProvider = asyncHandler(async (req, res, next) => {
     email,
     phone,
     city,
+    country,
     serviceCategoryName,
     website,
     facebook,
@@ -18,9 +24,35 @@ const addServiceProvider = asyncHandler(async (req, res, next) => {
     linkedin,
   } = req.body;
 
+  // Normalize city and country using the transformToEnumFormat function
+  const cityNormalized = transformToEnumFormat(city);
+  const countryNormalized = transformToEnumFormat(country);
+
+  // Ensure the country and city are valid enums
+  if (!Object.keys(Countries).includes(countryNormalized)) {
+    return res.status(400).json({ message: "Invalid country" });
+  }
+
+  if (!Object.keys(Cities).includes(cityNormalized)) {
+    return res.status(400).json({ message: "Invalid city" });
+  }
+
   // Find the service category by name
+  const serviceCategoryNameTrimmed = serviceCategoryName.trim();
+
   const serviceCategory = await ServiceCategoryModel.findOne({
-    name: { $regex: new RegExp(`^${serviceCategoryName}$`, "i") },
+    $or: [
+      {
+        "name.en": {
+          $regex: new RegExp(`^${serviceCategoryNameTrimmed}$`, "i"),
+        },
+      },
+      {
+        "name.ar": {
+          $regex: new RegExp(`^${serviceCategoryNameTrimmed}$`, "i"),
+        },
+      },
+    ],
   });
 
   if (!serviceCategory) {
@@ -73,9 +105,9 @@ const addServiceProvider = asyncHandler(async (req, res, next) => {
     about,
     email,
     phone,
-    city,
+    city: cityNormalized, // Use the normalized city
+    country: countryNormalized, // Use the normalized country
     serviceCategory: serviceCategory._id,
-    // createdBy: req.user._id,
     images,
     logo,
     website,

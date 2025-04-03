@@ -19,9 +19,10 @@ router.post(
   addServiceProvider
 );
 
+router.get("/", getAllServiceProviders);
+
 router.get("/by-category", getServiceProvidersByCategory);
 
-router.get("/", getAllServiceProviders);
 
 router.get("/:serviceProviderId", getServiceProviderById);
 
