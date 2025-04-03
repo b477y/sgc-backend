@@ -13,10 +13,8 @@ const paginate = async ({
 
   const skip = (page - 1) * limit;
 
-  // Get total count of documents matching the filter
   const total = await model.countDocuments(filter);
 
-  // Query data with pagination
   const data = await model
     .find(filter)
     .sort(sort)

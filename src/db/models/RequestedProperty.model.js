@@ -7,10 +7,8 @@ import {
   PropertyPurpose,
 } from "../../utils/enum/enums.js";
 
-// Extract main categories
-const mainCategories = Object.keys(Categories); // ["RESIDENTIAL", "PLOT", "COMMERCIAL"]
+const mainCategories = Object.keys(Categories);
 
-// Extract subcategories correctly
 const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
   Object.keys(sub.options).map((key) => ({
     key,
@@ -30,14 +28,14 @@ const RequestedPropertySchema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: mainCategories, // Only allows valid main categories
+      enum: mainCategories,
     },
     type: {
       type: String,
       required: true,
       validate: {
         validator: function (value) {
-          if (!this.category) return false; // Prevent undefined category error
+          if (!this.category) return false;
           return subcategories.some(
             (s) => s.key === value && s.mainCategory === this.category
           );
@@ -55,12 +53,12 @@ const RequestedPropertySchema = new Schema(
     },
     installments_available: { type: Boolean, default: false, required: true },
     specific_requirements: { type: String },
+    createdBy: { type: mongoose.Types.ObjectId, ref: "User", required: true },
     createdAt: { type: Date, default: Date.now, required: true },
   },
   { timestamps: true }
 );
 
-// Pre-validation normalization (case-insensitive matching)
 RequestedPropertySchema.pre("validate", function (next) {
   if (this.category) {
     this.category =

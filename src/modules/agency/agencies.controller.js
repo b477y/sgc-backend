@@ -10,20 +10,9 @@ import {
 
 const router = Router();
 
-// get agencies
 router.get("/listing", agencyService.getAgencies);
-
-// get agents
-router.get("/agents/listing", agencyService.getAgents);
-
-// get agency agents
 router.get("/:agencyId", agencyService.getAgencyDetails);
-
 router.get("/:agencyId/properties", agencyService.getAgencyProperties);
-// Normal users can view agency properties (done)
-
-router.get("/agent/:agentId", agencyService.getPropertiesByAgent);
-// Normal users can view agent properties (done)
 
 router.post(
   "/",
@@ -34,7 +23,6 @@ router.post(
   ]),
   agencyService.createAgencyWithOwner
 );
-// Only admins can add agencies with owners
 
 router.post(
   "/:agencyId/add-agent",
@@ -42,9 +30,5 @@ router.post(
   authorization(UserRole.AGENCY_OWNER),
   agencyService.addAgent
 );
-// Only admins can add agencies with owners
-
-// 2 endpoints remains
-
 
 export default router;

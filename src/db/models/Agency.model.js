@@ -6,7 +6,6 @@ const AgencySchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     description: { type: String, required: true },
-    properties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
     phone: { type: String, required: true, unique: true },
     country: {
       type: String,

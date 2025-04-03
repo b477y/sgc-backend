@@ -1,6 +1,5 @@
 import { Categories, Amenities } from "./enums.js";
 
-// Create lookup maps for quick conversion
 const categoryMap = Object.fromEntries(
   Object.entries(Categories).flatMap(([catKey, subcategories]) =>
     Object.entries(subcategories).map(([subKey, label]) => [

@@ -1,12 +1,18 @@
 import { Router } from "express";
-import addServiceCategory from "./services/addServiceCategory.service.js";
-import getServiceCategories from "./services/getServicesCategories.service.js";
-import getCompaniesByServiceCategory from "./services/getCompaniesByServiceCategory.service.js";
-
+import * as serviceCategoryService from "./services/serviceCategory.service.js";
+import authentication from "../../middlewares/authentication.middleware.js";
+import authorization from "../../middlewares/authorization.middleware.js";
+import { UserRole } from "../../utils/enum/enums.js";
 const router = Router();
 
-router.post("", addServiceCategory);
-router.get("", getServiceCategories);
-router.get("/:serviceId", getCompaniesByServiceCategory);
+router.post(
+  "",
+  authentication(),
+  authorization(UserRole.ADMIN),
+  serviceCategoryService.addServiceCategory
+);
+
+router.get("", serviceCategoryService.getServiceCategories);
+router.get("/:serviceId", serviceCategoryService.getServiceProvidersByCategory);
 
 export default router;

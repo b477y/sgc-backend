@@ -12,10 +12,8 @@ import {
   RentalFrequencies,
 } from "../../utils/enum/enums.js";
 
-// Extract main categories
-const mainCategories = Object.keys(Categories); // ["RESIDENTIAL", "PLOT", "COMMERCIAL"]
+const mainCategories = Object.keys(Categories);
 
-// Extract subcategories correctly
 const subcategories = Object.entries(Categories).flatMap(([main, sub]) =>
   Object.entries(sub.options).map(([key, value]) => ({
     key,
@@ -36,7 +34,7 @@ const PropertySchema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: mainCategories, // Only allows valid main categories
+      enum: mainCategories,
     },
     type: {
       type: String,
@@ -123,7 +121,7 @@ const PropertySchema = new Schema(
       required: true,
       enum: Object.keys(FurnishedStatus),
     },
-    area: { type: Number, required: true }, // Property area in square meters
+    area: { type: Number, required: true },
     amenities: [{ type: String, enum: Object.keys(Amenities), required: true }],
     images: [{ secure_url: String, public_id: String }],
     createdBy: { type: mongoose.Types.ObjectId, ref: "User", required: true },
@@ -133,15 +131,13 @@ const PropertySchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Agency",
       default: null,
-    }, // Only for agents
+    },
   },
   { timestamps: true }
 );
 
-// Ensure uniqueness for title & address
 PropertySchema.index({ title: 1, country: 1 }, { unique: true });
 
-// Pre-validation normalization (case-insensitive matching)
 PropertySchema.pre("validate", function (next) {
   if (this.category) {
     this.category =
@@ -159,9 +155,9 @@ PropertySchema.pre("validate", function (next) {
 
   if (this.amenities && Array.isArray(this.amenities)) {
     this.amenities = this.amenities
-      .flat() // Flatten nested arrays
-      .map((a) => (typeof a === "string" ? a.split(",") : [])) // Split comma-separated values
-      .flat(); // Flatten again after splitting
+      .flat()
+      .map((a) => (typeof a === "string" ? a.split(",") : []))
+      .flat();
   }
 
   next();

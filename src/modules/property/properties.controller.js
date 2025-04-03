@@ -3,30 +3,27 @@ import {
   fileValidations,
   uploadCloudFile,
 } from "../../utils/multer/cloud.multer.js";
-import addProperty from "./services/addProperty.service.js";
-import getProperties from "./services/getProperties.service.js";
-import requestProperty from "./services/requestProperty.service.js";
-import getProperty from "./services/getProperty.service.js";
 import authentication from "../../middlewares/authentication.middleware.js";
-import addPropertyByCategory from "./services/addPropertyByCategory.service.js";
-// import * as propertiesService from "./services/properties.service.js";
-import getUserProperties from "./services/getUserProperties.service.js";
+import * as propertiesService from "./services/properties.service.js";
 
 const router = Router();
 
-router.get("/", getProperties);
-router.get("/property/:propertyId", getProperty);
-router.get("/by-user", authentication(), getUserProperties);
-
-router.post("/request", requestProperty);
+router.get("/", propertiesService.getProperties);
+router.get("/property/:propertyId", propertiesService.getProperty);
+router.get("/by-user", authentication(), propertiesService.getUserProperties);
+router.get("/category/:categoryId", propertiesService.getProperties);
+router.get(
+  "/category/:categoryId/:subcategoryId",
+  propertiesService.getProperties
+);
 
 router.post(
-  "/",
-  uploadCloudFile(fileValidations.image).fields([
-    { name: "images", maxCount: 30 },
-  ]),
-  addProperty
+  "/property/:propertyId/like",
+  authentication(),
+  propertiesService.toggleLike
 );
+
+router.post("/request", authentication(), propertiesService.requestProperty);
 
 router.post(
   "/category/:categoryId/:subcategoryId",
@@ -34,16 +31,7 @@ router.post(
   uploadCloudFile(fileValidations.image).fields([
     { name: "images", maxCount: 30 },
   ]),
-  addPropertyByCategory
+  propertiesService.addPropertyByCategory
 );
 
-router.get("/category/:categoryId", getProperties);
-
-router.get("/category/:categoryId/:subcategoryId", getProperties);
 export default router;
-
-// will be deleted
-// getUserProperties.service.js
-// getResidentialProperties.service.js
-// requestProperty.service.js
-// getProperty.service.js

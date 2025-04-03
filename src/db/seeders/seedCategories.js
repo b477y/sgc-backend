@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import CategoryModel from "./Category.model.js"; // Adjust path as needed
+import CategoryModel from "../models/Category.model.js";
 
 const categories = [
   {
@@ -65,29 +65,24 @@ const categories = [
 
 async function seedCategories() {
   try {
-    console.log("🌱 Connecting to database...");
-    await mongoose.connect(
-      "mongodb+srv://sgcatsyria:JjzTk9BhRWnrKGGg@sgccluster.louc2.mongodb.net/sgc?retryWrites=true&w=majority",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
-
-    console.log("✅ Connected to database.");
-
-    console.log("🗑️ Deleting existing categories...");
+    console.log("Connecting to database");
+    await mongoose.connect("your_db", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to database");
+    console.log("Deleting existing categories");
     await CategoryModel.deleteMany();
 
-    console.log("📥 Inserting new categories...");
+    console.log("Inserting new categories");
     await CategoryModel.insertMany(categories);
 
-    console.log("✅ Seeding completed successfully!");
+    console.log("Seeding completed successfully");
   } catch (error) {
-    console.error("❌ Seeding failed:", error);
+    console.error("Seeding failed:", error);
   } finally {
     await mongoose.disconnect();
-    console.log("🔌 Disconnected from database.");
+    console.log("Disconnected from database");
   }
 }
 

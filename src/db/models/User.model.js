@@ -10,15 +10,20 @@ const UserSchema = new mongoose.Schema(
     language: {
       type: String,
       enum: Object.keys(Languages),
-      default: Languages.EN,
+      default: Languages.EN.en,
     },
-    profilePicture: { secure_url: String, public_id: String },
+    profilePicture: {
+      type: {
+        secure_url: String,
+        public_id: String,
+      },
+      default: null,
+    },
     currency: {
       type: String,
       enum: Object.keys(Currency),
-      default: Currency.USD,
+      default: Currency.USD.en,
     },
-    properties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
     likedProperties: [{ type: mongoose.Types.ObjectId, ref: "Property" }],
     agency: {
       type: mongoose.Schema.Types.ObjectId,

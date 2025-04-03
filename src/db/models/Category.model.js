@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Categories } from "../../utils/enum/enums.js";
 
 const SubcategorySchema = new mongoose.Schema({
   key: { type: String, required: true },
@@ -11,14 +12,14 @@ const SubcategorySchema = new mongoose.Schema({
 const CategorySchema = new mongoose.Schema({
   categoryName: {
     type: String,
-    enum: ["RESIDENTIAL", "PLOT", "COMMERCIAL"], // Ensure valid values
+    enum: Object.keys(Categories),
     required: true,
   },
   label: {
     en: { type: String, required: true },
     ar: { type: String, required: true },
   },
-  subcategories: { type: [SubcategorySchema], required: true }, // Fixed array issue
+  subcategories: { type: [SubcategorySchema], required: true },
 });
 
 const CategoryModel = mongoose.model("Category", CategorySchema);

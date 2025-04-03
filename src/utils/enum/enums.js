@@ -155,8 +155,8 @@ export const Currency = Object.freeze({
 });
 
 export const Languages = Object.freeze({
-  AR: { en: "Arabic", ar: "عربي" },
-  EN: { en: "English", ar: "إنجليزي" },
+  AR: { en: "AR", ar: "عربي" },
+  EN: { en: "EN", ar: "إنجليزي" },
 });
 
 export const Orientation = Object.freeze({

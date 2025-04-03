@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import ServiceCategoryModel from "../../db/models/ServiceCategory.model.js"; // Adjust the path as necessary
+import ServiceCategoryModel from "../models/ServiceCategory.model.js";
 
 const services = [
   { name: { en: "Cleaning", ar: "تنظيف" } },
@@ -40,29 +40,24 @@ const services = [
 
 async function seedServices() {
   try {
-    console.log("🌱 Connecting to database...");
-    await mongoose.connect(
-      "mongodb+srv://sgcatsyria:JjzTk9BhRWnrKGGg@sgccluster.louc2.mongodb.net/sgc?retryWrites=true&w=majority",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
+    console.log("Connecting to database");
+    await mongoose.connect("your_db", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to database");
+    console.log("Deleting existing service categories");
+    await ServiceCategoryModel.deleteMany();
 
-    console.log("✅ Connected to database.");
+    console.log("Inserting new service categories");
+    await ServiceCategoryModel.insertMany(services);
 
-    console.log("🗑️ Deleting existing service categories...");
-    await ServiceCategoryModel.deleteMany(); // Delete existing data
-
-    console.log("📥 Inserting new service categories...");
-    await ServiceCategoryModel.insertMany(services); // Insert new service categories
-
-    console.log("✅ Seeding completed successfully!");
+    console.log("Seeding completed successfully");
   } catch (error) {
-    console.error("❌ Seeding failed:", error);
+    console.error("Seeding failed:", error);
   } finally {
     await mongoose.disconnect();
-    console.log("🔌 Disconnected from database.");
+    console.log("Disconnected from database");
   }
 }
 
