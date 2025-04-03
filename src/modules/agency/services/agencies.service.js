@@ -4,14 +4,9 @@ import CategoryModel from "../../../db/models/Category.model.js";
 import { cloud } from "../../../utils/multer/cloudinary.multer.js";
 import asyncHandler from "../../../utils/response/error.response.js";
 import successResponse from "../../../utils/response/success.response.js";
-import paginate from "../../../utils/pagination/pagination.js"; // Import pagination utility
+import paginate from "../../../utils/pagination/pagination.js";
 import UserModel from "../../../db/models/User.model.js";
 import { UserRole } from "../../../utils/enum/enums.js";
-
-const transformToRegex = (value) => ({
-  $regex: `^${value.replace(/\s+/g, "_").toUpperCase()}$`,
-  $options: "i",
-});
 import {
   PropertyPurpose,
   FurnishedStatus,
@@ -22,6 +17,11 @@ import {
   Amenities,
   RealEstateSituation,
 } from "../../../utils/enum/enums.js";
+
+const transformToRegex = (value) => ({
+  $regex: `^${value.replace(/\s+/g, "_").toUpperCase()}$`,
+  $options: "i",
+});
 
 export const getAgencyProperties = asyncHandler(async (req, res, next) => {
   const { agencyId } = req.params;
@@ -176,7 +176,6 @@ export const getAgencyProperties = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Passing the agent ID in the parameters to retrieve properties created by the specific agent
 export const getPropertiesByAgent = asyncHandler(async (req, res, next) => {
   const { agentId } = req.params;
   const {
@@ -188,9 +187,13 @@ export const getPropertiesByAgent = asyncHandler(async (req, res, next) => {
     page = 1,
     limit = 10,
   } = req.query;
+  const language = req.headers["accept-language"]?.split(",")[0] || "en"; // Default to English
 
   // Define the base filter for the properties (only properties created by the specific agent)
   let filter = { createdBy: agentId };
+
+  // Load category data
+  const categories = await CategoryModel.find().lean();
 
   // Define dynamic filters (based on query parameters)
   const fields = { city, purpose, type, furnished };
@@ -224,22 +227,99 @@ export const getPropertiesByAgent = asyncHandler(async (req, res, next) => {
 
   if (!properties.length) {
     return next(
-      new Error("No properties found for this agent", { cause: 404 })
+      new Error(
+        language === "ar"
+          ? "لا توجد عقارات لهذا الوكيل"
+          : "No properties found for this agent",
+        { cause: 404 }
+      )
     );
   }
 
-  // Optimize property data (return only essential fields)
-  properties.forEach((property) => {
-    property.image = property.images?.[0]?.secure_url || null; // Extract first image only
-    delete property.images; // Remove full images array
-  });
+  // Function to localize categories
+  const getLocalizedCategory = (categoryKey) => {
+    const category = categories.find((cat) => cat.categoryName === categoryKey);
+    return category ? category.label[language] : categoryKey;
+  };
+
+  const getLocalizedType = (typeKey) => {
+    const category = categories.find((cat) =>
+      cat.subcategories.some((sub) => sub.key === typeKey)
+    );
+    const subcategory = category?.subcategories.find(
+      (sub) => sub.key === typeKey
+    );
+    return subcategory ? subcategory.label[language] : typeKey;
+  };
+
+  // Optimize & Localize Property Data
+  const localizedProperties = properties.map((property) => ({
+    _id: property._id,
+    purpose:
+      language === "ar"
+        ? PropertyPurpose[property.purpose]?.ar
+        : PropertyPurpose[property.purpose]?.en,
+    country:
+      language === "ar"
+        ? Countries[property.country]?.ar
+        : Countries[property.country]?.en,
+    city:
+      language === "ar" ? Cities[property.city]?.ar : Cities[property.city]?.en,
+    category: getLocalizedCategory(property.category),
+    type: getLocalizedType(property.type),
+    title: property.title,
+    description: property.description,
+    price_currency:
+      language === "ar"
+        ? Currency[property.price_currency]?.ar
+        : property.price_currency,
+    price: property.price,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    livingrooms: property.livingrooms,
+    kitchen: property.kitchen,
+    balconies: property.balconies,
+    floor_number: property.floor_number,
+    orientation:
+      language === "ar"
+        ? Orientation[property.orientation]?.ar
+        : Orientation[property.orientation]?.en,
+    monthly_service_currency:
+      language === "ar"
+        ? Currency[property.monthly_service_currency]?.ar
+        : property.monthly_service_currency,
+    monthly_service: property.monthly_service,
+    real_estate_situation:
+      language === "ar"
+        ? RealEstateSituation[property.real_estate_situation]?.ar ||
+          property.real_estate_situation
+        : RealEstateSituation[property.real_estate_situation]?.en ||
+          property.real_estate_situation,
+    furnished:
+      language === "ar"
+        ? FurnishedStatus[property.furnished]?.ar
+        : FurnishedStatus[property.furnished]?.en,
+    area: property.area,
+    amenities: property.amenities.map((amenity) =>
+      language === "ar" ? Amenities[amenity]?.ar : Amenities[amenity]?.en
+    ),
+    createdBy: property.createdBy,
+    contact: property.contact,
+    agency: property.agency,
+    createdAt: property.createdAt,
+    updatedAt: property.updatedAt,
+    image: property.images?.[0]?.secure_url || null, // Extract first image only
+  }));
 
   // Return paginated properties along with metadata
   return successResponse({
     res,
     status: 200,
-    message: "Agent properties retrieved successfully",
-    data: properties,
+    message:
+      language === "ar"
+        ? "تم استرجاع العقارات الخاصة بالوكيل بنجاح"
+        : "Agent properties retrieved successfully",
+    data: localizedProperties,
     meta: {
       page: currentPage,
       limit: pageSize,
@@ -383,54 +463,51 @@ export const getAgencies = asyncHandler(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; // Pagination
   const skip = (page - 1) * limit;
 
+  // Get language from the Accept-Language header (default to 'en' if not provided)
+  const lang = req.headers["accept-language"]?.split(",")[0] || "en";
+
   const agencies = await AgencyModel.find({})
     .skip(skip)
     .limit(Number(limit))
+    .populate("agents", "name") // Populate agents' names
     .lean();
 
   if (!agencies.length) {
-    return next(new Error("There are no agencies", { cause: 404 }));
+    return next(
+      new Error(lang === "ar" ? "لا توجد وكالات" : "There are no agencies", {
+        cause: 404,
+      })
+    );
   }
 
   const total = await AgencyModel.countDocuments(); // Total count
 
-  return successResponse({
-    res,
-    status: 200,
-    message: "Agencies retrieved successfully",
-    data: {
-      agencies,
-      meta: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    },
-  });
-});
-
-export const getAgents = asyncHandler(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query;
-
-  const agents = await UserModel.find({ role: UserRole.AGENT })
-    .skip((page - 1) * limit)
-    .limit(Number(limit))
-    .populate("agency", "name")
-    .lean();
-
-  if (!agents.length) {
-    return next(new Error("No agents found", { cause: 404 }));
-  }
-
-  const total = await UserModel.countDocuments({ role: UserRole.AGENT });
+  // Map agencies to handle translations and format logo URLs
+  const formattedAgencies = agencies.map(
+    ({ logo, agents, country, city, ...agency }) => ({
+      ...agency,
+      logo: logo?.secure_url || null, // Handle logo URL
+      country:
+        lang === "ar"
+          ? Countries[country]?.ar || country
+          : Countries[country]?.en || country, // Translate country
+      city: lang === "ar" ? Cities[city]?.ar || city : Cities[city]?.en || city, // Translate city
+      agents: agents.map((agent) => ({
+        _id: agent._id,
+        name: agent.name,
+      })),
+    })
+  );
 
   return successResponse({
     res,
     status: 200,
-    message: "Agents retrieved successfully",
+    message:
+      lang === "ar"
+        ? "تم استرجاع الوكالات بنجاح"
+        : "Agencies retrieved successfully",
     data: {
-      agents,
+      agencies: formattedAgencies,
       meta: {
         page: Number(page),
         limit: Number(limit),
@@ -443,34 +520,129 @@ export const getAgents = asyncHandler(async (req, res, next) => {
 
 export const getAgencyDetails = asyncHandler(async (req, res, next) => {
   const { agencyId } = req.params;
-  const { page = 1, limit = 10 } = req.query; // Pagination for listing agents
+  const { page = 1, limit = 10 } = req.query;
+
+  const lang = req.headers["accept-language"]?.split(",")[0] || "en";
 
   const agency = await AgencyModel.findById(agencyId).lean();
 
   if (!agency) {
-    return next(new Error("Agency not found", { cause: 404 }));
+    return next(
+      new Error(lang === "ar" ? "الوكالة غير موجودة" : "Agency not found", {
+        cause: 404,
+      })
+    );
   }
 
-  // Fetch agents that are associated with a specific agency
-  const agents = await UserModel.find({ agency: agencyId })
+  const agencyWithoutOwner = {
+    ...agency,
+    agents: agency.agents.filter(
+      (agentId) => agentId !== agency.owner.toString()
+    ),
+  };
+
+  const agents = await UserModel.find({
+    agency: agencyId,
+    role: { $ne: "Agency Owner" },
+  })
     .skip((page - 1) * limit)
     .limit(Number(limit))
     .lean();
 
   if (!agents.length) {
-    return next(new Error("No agents found for this agency", { cause: 404 }));
+    return next(
+      new Error(
+        lang === "ar"
+          ? "لا توجد وكلاء لهذه الوكالة"
+          : "No agents found for this agency",
+        { cause: 404 }
+      )
+    );
   }
 
-  // Get total count for pagination
-  const total = await UserModel.countDocuments({ agency: agencyId });
+  const total = await UserModel.countDocuments({
+    agency: agencyId,
+    role: { $ne: "Agency Owner" },
+  });
+
+  const formattedAgency = {
+    ...agencyWithoutOwner,
+    logo: agency.logo?.secure_url || null,
+    country:
+      lang === "ar"
+        ? Countries[agency.country]?.ar || agency.country
+        : Countries[agency.country]?.en || agency.country,
+    city:
+      lang === "ar"
+        ? Cities[agency.city]?.ar || agency.city
+        : Cities[agency.city]?.en || agency.city,
+  };
+
+  const formattedAgents = agents.map((agent) => ({
+    _id: agent._id,
+    name: agent.name,
+    role: agent.role,
+  }));
 
   return successResponse({
     res,
     status: 200,
-    message: "Agency details retrieved successfully",
+    message:
+      lang === "ar"
+        ? "تم استرجاع تفاصيل الوكالة بنجاح"
+        : "Agency details retrieved successfully",
     data: {
-      agency,
-      agents,
+      agency: formattedAgency,
+      agents: formattedAgents,
+      meta: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    },
+  });
+});
+
+export const getAgents = asyncHandler(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+  const lang = req.headers["accept-language"]?.split(",")[0] || "en";
+
+  const agents = await UserModel.find({ role: UserRole.AGENT })
+    .skip((page - 1) * limit)
+    .limit(Number(limit))
+    .populate("agency", "name")
+    .lean();
+
+  if (!agents.length) {
+    return next(
+      new Error(lang === "ar" ? "لا توجد وكلاء" : "No agents found", {
+        cause: 404,
+      })
+    );
+  }
+
+  const formattedAgents = agents.map((agent) => ({
+    _id: agent._id,
+    name: agent.name,
+    email: agent.email,
+    agency: {
+      _id: agent.agency._id,
+      name: agent.agency.name,
+    },
+  }));
+
+  const total = await UserModel.countDocuments({ role: UserRole.AGENT });
+
+  return successResponse({
+    res,
+    status: 200,
+    message:
+      lang === "ar"
+        ? "تم استرجاع الوكلاء بنجاح"
+        : "Agents retrieved successfully",
+    data: {
+      agents: formattedAgents,
       meta: {
         page: Number(page),
         limit: Number(limit),
