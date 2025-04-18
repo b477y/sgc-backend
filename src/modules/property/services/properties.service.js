@@ -23,7 +23,7 @@ import {
   RealEstateSituation,
 } from "../../../utils/enum/enums.js";
 
-const transformToEnumFormat = (value) =>
+const transformToRegex = (value) =>
   value.trim().replace(/\s+/g, "_").toUpperCase();
 
 const findValidSubcategory = (category, type) => {
@@ -37,7 +37,7 @@ const findValidSubcategory = (category, type) => {
 };
 
 export const addPropertyByCategory = asyncHandler(async (req, res, next) => {
-  const { categoryId, subcategoryId } = req.params;
+  const { categoryId, subcategoryId } = req.body;
 
   let agencyId = null;
 
@@ -50,8 +50,13 @@ export const addPropertyByCategory = asyncHandler(async (req, res, next) => {
   let images = [];
 
   const category = await CategoryModel.findById(categoryId);
+
   if (!category) {
-    return next(new Error("Category not found", { cause: 404 }));
+    return next(
+      new Error(language === "ar" ? "الفئة غير موجودة" : "Category not found", {
+        cause: 404,
+      })
+    );
   }
 
   const categoryName = category.categoryName.toUpperCase();
@@ -109,8 +114,16 @@ export const addPropertyByCategory = asyncHandler(async (req, res, next) => {
     const subcategory = category.subcategories.find(
       (sub) => sub._id.toString() === subcategoryId
     );
+
     if (!subcategory) {
-      return next(new Error("Subcategory not found", { cause: 404 }));
+      return next(
+        new Error(
+          language === "ar"
+            ? "الفئةالفرعية غير موجودة"
+            : "Subcategory not found",
+          { cause: 404 }
+        )
+      );
     }
     subcategoryName = subcategory.key;
   }
@@ -273,7 +286,7 @@ export const addPropertyByCategory = asyncHandler(async (req, res, next) => {
 });
 
 export const getProperties = asyncHandler(async (req, res, next) => {
-  const { categoryId, subcategoryId } = req.params;
+  const { categoryId, subcategoryId } = req.body;
   const { city, purpose, type, furnished, sort, page, limit } = req.query;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
   const filter = {};
@@ -287,6 +300,7 @@ export const getProperties = asyncHandler(async (req, res, next) => {
     const category = categories.find(
       (cat) => cat._id.toString() === categoryId
     );
+
     if (!category) {
       return next(
         new Error(
@@ -312,6 +326,8 @@ export const getProperties = asyncHandler(async (req, res, next) => {
 
   Object.keys(fields).forEach((key) => {
     if (fields[key]) {
+      const transformToRegex = (value) =>
+        value.trim().replace(/\s+/g, "_").toUpperCase();
       filter[key] = transformToRegex(fields[key]);
     }
   });
@@ -600,7 +616,7 @@ export const requestProperty = asyncHandler(async (req, res, next) => {
 });
 
 export const getProperty = asyncHandler(async (req, res, next) => {
-  const { propertyId } = req.params;
+  const { propertyId } = req.body;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
 
   const property = await PropertyModel.findById(propertyId).lean();
@@ -701,7 +717,7 @@ export const getProperty = asyncHandler(async (req, res, next) => {
 });
 
 export const toggleLike = asyncHandler(async (req, res, next) => {
-  const { propertyId } = req.params;
+  const { propertyId } = req.body;
   const userId = req.user._id;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
 
@@ -713,6 +729,7 @@ export const toggleLike = asyncHandler(async (req, res, next) => {
       })
     );
   }
+
 
   let message;
   if (user.likedProperties.includes(propertyId)) {

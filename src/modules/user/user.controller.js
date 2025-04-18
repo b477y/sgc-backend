@@ -1,6 +1,4 @@
 import { Router } from "express";
-import authorization from "../../middlewares/authorization.middleware.js";
-import { UserRole } from "../../utils/enum/enums.js";
 import authentication from "../../middlewares/authentication.middleware.js";
 import * as userService from "./services/user.service.js";
 

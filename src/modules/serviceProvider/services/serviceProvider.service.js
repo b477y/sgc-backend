@@ -58,8 +58,7 @@ export const getServiceProvidersByCategory = asyncHandler(
 );
 
 export const getServiceProviderById = asyncHandler(async (req, res, next) => {
-  const { serviceProviderId } = req.params;
-
+  const { serviceProviderId } = req.body;
   const lang = req.headers["accept-language"]?.split(",")[0] || "en";
 
   const serviceProvider = await ServiceProviderModel.findById(serviceProviderId)

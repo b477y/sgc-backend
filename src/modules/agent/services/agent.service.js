@@ -22,7 +22,7 @@ const transformToRegex = (value) => ({
 });
 
 export const getPropertiesByAgent = asyncHandler(async (req, res, next) => {
-  const { agentId } = req.params;
+  const { agentId } = req.body;
   const {
     city,
     purpose,
@@ -217,7 +217,7 @@ export const getAgents = asyncHandler(async (req, res, next) => {
 });
 
 export const getAgentProfile = asyncHandler(async (req, res, next) => {
-  const { agentId } = req.params;
+  const { agentId } = req.body;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
 
   const agentProfile = await UserModel.findById(agentId).lean();

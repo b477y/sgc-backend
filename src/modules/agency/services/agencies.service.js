@@ -24,7 +24,7 @@ const transformToRegex = (value) => ({
 });
 
 export const getAgencyProperties = asyncHandler(async (req, res, next) => {
-  const { agencyId } = req.params;
+  const { agencyId } = req.body;
   const { city, purpose, type, furnished, sort, page, limit } = req.query;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
 
@@ -247,7 +247,7 @@ export const createAgencyWithOwner = asyncHandler(async (req, res, next) => {
 });
 
 export const addAgent = asyncHandler(async (req, res, next) => {
-  const { agencyId } = req.params;
+  const { agencyId } = req.body;
   const { name, email, password, phone } = req.body;
 
   const agency = await AgencyModel.findOne({
@@ -349,7 +349,7 @@ export const getAgencies = asyncHandler(async (req, res, next) => {
 });
 
 export const getAgencyDetails = asyncHandler(async (req, res, next) => {
-  const { agencyId } = req.params;
+  const { agencyId } = req.body;
   const { page = 1, limit = 10 } = req.query;
 
   const lang = req.headers["accept-language"]?.split(",")[0] || "en";

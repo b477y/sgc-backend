@@ -55,7 +55,7 @@ export const getCities = asyncHandler((req, res, next) => {
 });
 
 export const getCategoryById = asyncHandler(async (req, res, next) => {
-  const { categoryId } = req.params;
+  const { categoryId } = req.body;
   const language = req.headers["accept-language"]?.split(",")[0] || "en";
 
   const category = await CategoryModel.findById(categoryId);

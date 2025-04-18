@@ -11,8 +11,8 @@ import {
 const router = Router();
 
 router.get("/listing", agencyService.getAgencies);
-router.get("/:agencyId", agencyService.getAgencyDetails);
-router.get("/:agencyId/properties", agencyService.getAgencyProperties);
+router.get("/", agencyService.getAgencyDetails);
+router.get("/properties", agencyService.getAgencyProperties);
 
 router.post(
   "/",
@@ -25,7 +25,7 @@ router.post(
 );
 
 router.post(
-  "/:agencyId/add-agent",
+  "/add-agent",
   authentication(),
   authorization(UserRole.AGENCY_OWNER),
   agencyService.addAgent

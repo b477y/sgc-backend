@@ -13,6 +13,6 @@ router.post(
 );
 
 router.get("", serviceCategoryService.getServiceCategories);
-router.get("/:serviceId", serviceCategoryService.getServiceProvidersByCategory);
+router.get("/by-service-id", serviceCategoryService.getServiceProvidersByCategory);
 
 export default router;

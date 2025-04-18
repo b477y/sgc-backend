@@ -28,7 +28,7 @@ router.get(
 );
 
 router.get(
-  "/:serviceProviderId",
+  "/by-id",
   serviceProviderService.getServiceProviderById
 );
 

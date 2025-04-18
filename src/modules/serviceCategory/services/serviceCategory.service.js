@@ -16,7 +16,7 @@ export const addServiceCategory = asyncHandler(async (req, res, next) => {
 
 export const getServiceProvidersByCategory = asyncHandler(
   async (req, res, next) => {
-    const { serviceId } = req.params;
+    const { serviceId } = req.body;
 
     const service = await ServiceCategoryModel.findById(serviceId).select(
       "name -_id"
@@ -58,7 +58,7 @@ export const getServiceProvidersByCategory = asyncHandler(
     return successResponse({
       res,
       status: 200,
-      message: "Service providers retrieved successfully",
+      message: "Service provider retrieved successfully",
       data: { service: service.name, serviceProviders: formattedProviders },
     });
   }
